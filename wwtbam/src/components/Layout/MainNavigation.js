@@ -1,26 +1,46 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useContext, useHistory } from "react";
+import { NavLink } from "react-router-dom";
+import AuthContext from "../../store/auth-context";
 
 import classes from "./MainNavigation.module.css";
 
 const MainNavigation = () => {
+  const authCtx = useContext(AuthContext);
+
+  let navBarContent;
+
+  const logoutHandler = () => {
+    authCtx.logout();
+  }
+
+  if (authCtx.isLoggedIn) {
+    navBarContent = (
+      <ul>
+        <li>
+          <NavLink to="/profile">Profile</NavLink>
+        </li>
+        <li>
+          <button onClick={logoutHandler}>Logout</button>
+        </li>
+      </ul>
+    );
+  } else {
+    navBarContent = (
+      <ul>
+        <li>
+          <NavLink to="/auth">Login</NavLink>
+        </li>
+      </ul>
+    );
+  }
+
   return (
     <header className={classes.header}>
-      <Link to="/">
+      <NavLink to="/">
         <div className={classes.logo}>WWTBAM</div>
-      </Link>
+      </NavLink>
       <nav>
-        <ul>
-          <li>
-            <Link to="/profile">Stati</Link>
-          </li>
-          <li>
-            <button>Login</button>
-          </li>
-          <li>
-            <button>Logout</button>
-          </li>
-        </ul>
+        {navBarContent}
       </nav>
     </header>
   );

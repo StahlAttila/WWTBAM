@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useState } from "react";
 
 const AuthContext = React.createContext({
   token: "",
-  username: "",
+  userDetails: {},
   isLoggedIn: false,
-  login: (token, username, expirationTime) => {},
+  login: (loginData) => {},
   logout: () => {},
 });
 
@@ -44,32 +44,37 @@ export const AuthContextProvider = (props) => {
     initialToken = tokenData.token;
   }
   const [token, setToken] = useState(initialToken);
-  const [username, setUsername] = useState(null);
+  const [userDetails, setUserDetails] = useState({});
 
   const userIsLoggedIn = !!token;
 
   const logoutHandler = useCallback(() => {
+    console.log("logout handler called")
     setToken(null);
     localStorage.removeItem("token");
     localStorage.removeItem("expTime");
+    localStorage.removeItem("user");
 
     if (logoutTimer) {
       clearTimeout(logoutTimer);
     }
   }, []);
 
-  const loginHandler = (token, username, expirationTime) => {
-    setToken(token);
-    setUsername(username);
+  const loginHandler = useCallback((loginData) => {
+    //loginData also contains refresh token for later usage
+    console.log("loginhandler", loginData)
+    setToken(loginData.tokenData.token);
+    setUserDetails(loginData.userData);
     localStorage.setItem("token", token);
-    localStorage.setItem("username", username);
-    localStorage.setItem("expTime", expirationTime);
-    const remainingTime = calculateRemainingTime(expirationTime);
-
+    localStorage.setItem("user", JSON.stringify(userDetails));
+    localStorage.setItem("expTime", loginData.tokenData.expirationTime);
+    const remainingTime = calculateRemainingTime(loginData.tokenData.expirationTime);
+    console.log(remainingTime)
     logoutTimer = setTimeout(logoutHandler, remainingTime);
-  };
+  },[logoutHandler, token, userDetails]);
 
   useEffect(() => {
+    console.log("logout?")
     if (tokenData) {
       logoutTimer = setTimeout(logoutHandler, tokenData.duration);
     }
@@ -77,7 +82,7 @@ export const AuthContextProvider = (props) => {
 
   const contextValue = {
     token: token,
-    username: username,
+    userDetails: userDetails,
     isLoggedIn: userIsLoggedIn,
     login: loginHandler,
     logout: logoutHandler,
