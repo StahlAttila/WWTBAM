@@ -49,8 +49,8 @@ export const AuthContextProvider = (props) => {
   const userIsLoggedIn = !!token;
 
   const logoutHandler = useCallback(() => {
-    console.log("logout handler called")
     setToken(null);
+    setUserDetails(null);
     localStorage.removeItem("token");
     localStorage.removeItem("expTime");
     localStorage.removeItem("user");
@@ -62,19 +62,16 @@ export const AuthContextProvider = (props) => {
 
   const loginHandler = useCallback((loginData) => {
     //loginData also contains refresh token for later usage
-    console.log("loginhandler", loginData)
     setToken(loginData.tokenData.token);
     setUserDetails(loginData.userData);
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userDetails));
+    localStorage.setItem("token", loginData.tokenData.token);
+    localStorage.setItem("user", JSON.stringify(loginData.userData));
     localStorage.setItem("expTime", loginData.tokenData.expirationTime);
     const remainingTime = calculateRemainingTime(loginData.tokenData.expirationTime);
-    console.log(remainingTime)
     logoutTimer = setTimeout(logoutHandler, remainingTime);
-  },[logoutHandler, token, userDetails]);
+  },[logoutHandler]);
 
   useEffect(() => {
-    console.log("logout?")
     if (tokenData) {
       logoutTimer = setTimeout(logoutHandler, tokenData.duration);
     }

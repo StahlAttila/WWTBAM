@@ -13,7 +13,7 @@ const AuthForm = () => {
   const authCtx = useContext(AuthContext);
 
   const { sendRequest: signInRequest, status: signInStatus, data: signInData, error: signInError } = useHttp(signIn, false);
-  const { sendRequest: signUpRequest, status: signUpStatus, data: signUpData, error: signUpError } = useHttp(signUp, true);
+  const { sendRequest: signUpRequest, error: signUpError } = useHttp(signUp, true);
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
