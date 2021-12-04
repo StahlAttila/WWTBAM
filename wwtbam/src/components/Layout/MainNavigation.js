@@ -3,24 +3,18 @@ import { NavLink } from "react-router-dom";
 import AuthContext from "../../store/auth-context";
 
 import classes from "./MainNavigation.module.css";
+import AccountMenu from "./AccountMenu";
 
 const MainNavigation = () => {
   const authCtx = useContext(AuthContext);
 
   let navBarContent;
 
-  const logoutHandler = () => {
-    authCtx.logout();
-  }
-
-  if (authCtx.isLoggedIn) {
+  if (authCtx.isLoggedIn && authCtx.user) {
     navBarContent = (
       <ul>
         <li>
-          <NavLink to="/profile">Profile</NavLink>
-        </li>
-        <li>
-          <button onClick={logoutHandler}>Logout</button>
+          <AccountMenu username={authCtx.user.displayName} logout={authCtx.logout}/>
         </li>
       </ul>
     );
@@ -28,7 +22,7 @@ const MainNavigation = () => {
     navBarContent = (
       <ul>
         <li>
-          <NavLink to="/auth">Login</NavLink>
+          <NavLink to="/auth" className="login">Login</NavLink>
         </li>
       </ul>
     );
@@ -39,9 +33,7 @@ const MainNavigation = () => {
       <NavLink to="/">
         <div className={classes.logo}>WWTBAM</div>
       </NavLink>
-      <nav>
-        {navBarContent}
-      </nav>
+      <nav>{navBarContent}</nav>
     </header>
   );
 };

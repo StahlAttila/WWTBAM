@@ -7,22 +7,21 @@ import ProfilePage from "./pages/ProfilePage";
 import AuthContext from "./store/auth-context";
 
 function App() {
-  const authCtx = useContext(AuthContext);
+  const { isLoggedIn } = useContext(AuthContext);
 
   return (
     <Layout>
       <Switch>
         <Route path="/" exact>
-          <HomePage />
+          {isLoggedIn && <HomePage />}
+          {!isLoggedIn && <Redirect to="/auth/" />}
         </Route>
-        {!authCtx.isLoggedIn && (
-          <Route path="/auth">
-            <AuthPage />
-          </Route>
-        )}
+        <Route path="/auth">
+          <AuthPage />
+        </Route>
         <Route path="/profile">
-          {authCtx.isLoggedIn && <ProfilePage />}
-          {!authCtx.isLoggedIn && <Redirect to="/auth" />}
+          {isLoggedIn && <ProfilePage />}
+          {!isLoggedIn && <Redirect to="/auth" />}
         </Route>
         <Route path="*">
           <Redirect to="/" />

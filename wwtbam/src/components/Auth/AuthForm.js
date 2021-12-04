@@ -1,62 +1,73 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import useHttp from "../../hooks/use-http";
-import { signIn, signUp } from "../../lib/api";
+import React, { useContext, useRef, useState } from "react";
 import AuthContext from "../../store/auth-context";
+import { useHistory } from "react-router";
+import { CircularProgress, Alert } from "@mui/material";
 
 import classes from "./AuthForm.module.css";
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState('');
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState("");
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
   const authCtx = useContext(AuthContext);
-
-  const { sendRequest: signInRequest, status: signInStatus, data: signInData, error: signInError } = useHttp(signIn, false);
-  const { sendRequest: signUpRequest, error: signUpError } = useHttp(signUp, true);
+  const history = useHistory();
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
   };
 
-  const submitHandler = (event) => {
+  const submitHandler = async (event) => {
     event.preventDefault();
-
+    setError("");
+    setMessage("");
+    setIsLoading(true);
     const eneteredEmail = emailInputRef.current.value;
     const eneteredPassword = passwordInputRef.current.value;
 
-
-    if(isLogin) {
-      signInRequest({email: eneteredEmail, password: eneteredPassword});
-    } else {
-      signUpRequest({username: username, email: eneteredEmail, password: eneteredPassword});
-    }
+    try {
+      if (isLogin) {
+        await authCtx.login(eneteredEmail, eneteredPassword);
+        history.push("/");
+      } else {
+        await authCtx.signUp(username, eneteredEmail, eneteredPassword);
+        setMessage("Account created! Check your mailbox to confirm registration.")
+      }
+      setIsLoading(false)
+    } catch (err){
+      if(err.message.includes("not-found")) {
+        setError("Email or password doesnt match.")
+      } else {
+        setError("Failed to sign in/sign up!")
+      }
+      setIsLoading(false)
+    } 
   };
 
-  useEffect(() => {
-    if(signInStatus === 'completed' && !signInError && signInData) {
-      authCtx.login(signInData);
-    }
-  }, [authCtx, signInStatus, signInData, signInError]);
-
-
-  if(signInError || signUpError) {
-    const message = signInError || signUpError;
-    return <div><h1>{message}</h1></div>
-  }
-
   const usernameChangeHandler = (event) => {
-    setUsername(event.target.value)
-  }
+    setUsername(event.target.value);
+  };
 
   return (
     <section className={classes.auth}>
+
       <h1>{isLogin ? "Login" : "Sign Up"}</h1>
+      {error && <Alert severity="error">{error}</Alert>}
+      {message && <Alert severity="success">{message}</Alert>}
       <form onSubmit={submitHandler}>
         {!isLogin && (
           <div className={classes.control}>
             <label htmlFor="username">Your Username</label>
-            <input value={username} type="text" id="username" required onChange={usernameChangeHandler} />
+            <input
+              value={username}
+              type="text"
+              id="username"
+              required
+              onChange={usernameChangeHandler}
+            />
           </div>
         )}
         <div className={classes.control}>
@@ -73,8 +84,8 @@ const AuthForm = () => {
           />
         </div>
         <div className={classes.actions}>
-          <button>{isLogin ? "Login" : "Create Account"}</button>
-
+          {isLoading && <CircularProgress/>}
+          {!isLoading && <button>{isLogin ? "Login" : "Create Account"}</button>}
           <button
             type="button"
             className={classes.toggle}

@@ -1,89 +1,51 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { auth } from "../lib/app";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "@firebase/auth";
 
 const AuthContext = React.createContext({
-  token: "",
-  userDetails: {},
+  user: {},
   isLoggedIn: false,
-  login: (loginData) => {},
+  signUp: function(username, email, password){return null},
+  login: function(email, password){return null},
   logout: () => {},
 });
 
-const calculateRemainingTime = (expirationTime) => {
-  const currentTime = new Date().getTime();
-  const adjustedTime = new Date(expirationTime).getTime();
-
-  return adjustedTime - currentTime;
-};
-
-let logoutTimer;
-
-const retrievedStoredUserInfo = () => {
-  const storedToken = localStorage.getItem("token");
-  const storedExpTime = localStorage.getItem("expTime");
-  const storedUsername = localStorage.getItem("username");
-
-  const remainingTime = calculateRemainingTime(storedExpTime);
-
-  if (remainingTime < 60000) {
-    localStorage.removeItem("expTime");
-    return null;
-  }
-
-  return {
-    token: storedToken,
-    username: storedUsername,
-    duration: remainingTime,
-  };
-};
-
 export const AuthContextProvider = (props) => {
-  const tokenData = retrievedStoredUserInfo();
-  let initialToken;
+  const [currentUser, setCurrentUser] = useState();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  if (tokenData) {
-    initialToken = tokenData.token;
+  const signUpHandler = async (username,email, password) => {
+    return createUserWithEmailAndPassword(auth, email, password).then(res => {
+      return updateProfile(res.user, {displayName: username})
+    });
   }
-  const [token, setToken] = useState(initialToken);
-  const [userDetails, setUserDetails] = useState({});
 
-  const userIsLoggedIn = !!token;
+  const loginHandler = (email, password) => {
+    signInWithEmailAndPassword(auth, email, password);
+    setIsLoggedIn(true);
+  }
 
-  const logoutHandler = useCallback(() => {
-    setToken(null);
-    setUserDetails(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("expTime");
-    localStorage.removeItem("user");
-
-    if (logoutTimer) {
-      clearTimeout(logoutTimer);
-    }
-  }, []);
-
-  const loginHandler = useCallback((loginData) => {
-    //loginData also contains refresh token for later usage
-    setToken(loginData.tokenData.token);
-    setUserDetails(loginData.userData);
-    localStorage.setItem("token", loginData.tokenData.token);
-    localStorage.setItem("user", JSON.stringify(loginData.userData));
-    localStorage.setItem("expTime", loginData.tokenData.expirationTime);
-    const remainingTime = calculateRemainingTime(loginData.tokenData.expirationTime);
-    logoutTimer = setTimeout(logoutHandler, remainingTime);
-  },[logoutHandler]);
-
-  useEffect(() => {
-    if (tokenData) {
-      logoutTimer = setTimeout(logoutHandler, tokenData.duration);
-    }
-  }, [tokenData, logoutHandler]);
+  const logoutHandler = () => {
+    setCurrentUser(null)
+    setIsLoggedIn(false)
+    signOut(auth);
+  }
 
   const contextValue = {
-    token: token,
-    userDetails: userDetails,
-    isLoggedIn: userIsLoggedIn,
+    user: currentUser,
+    isLoggedIn,
+    signUp: signUpHandler,
     login: loginHandler,
     logout: logoutHandler,
   };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user)
+    })
+
+    return unsubscribe
+  }, []);
 
   return (
     <AuthContext.Provider value={contextValue}>

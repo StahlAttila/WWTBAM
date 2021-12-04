@@ -1,4 +1,4 @@
-const FIREBASE_DOMAIN = process.env.REACT_APP_BASE_URL;
+const FIREBASE_DOMAIN = process.env.REACT_APP_DATABASE_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 export async function signIn(credentials) {
@@ -56,7 +56,7 @@ export async function signUp(credentials) {
     throw new Error(data.message || "Authentication error!");
   }
 
-  addUserToDatabase({
+addUserToDatabase({
     username: credentials.username,
     email: credentials.email,
   });

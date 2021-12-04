@@ -28,13 +28,13 @@
   margin: 0 1rem;
 }
 
-.header a {
+.header a, p {
   text-decoration: none;
   color: white;
   font-weight: bold;
 }
 
-.header button {
+.login {
   font: inherit;
   background-color: transparent;
   border: 1px solid white;
